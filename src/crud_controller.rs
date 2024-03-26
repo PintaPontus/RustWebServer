@@ -17,14 +17,11 @@ pub async fn get() -> String {
 
     // Assuming you have a single row in your_table
     match client.query("SELECT * FROM users", &[]).await {
-        Ok(rows) => {
-            rows.iter()
-                .map(|row| -> String {
-                    row.get("name")
-                })
-                .collect::<Vec<_>>()
-                .join(";\n")
-        }
+        Ok(rows) => rows
+            .iter()
+            .map(|row| -> String { row.get("name") })
+            .collect::<Vec<_>>()
+            .join(";\n"),
         Err(e) => {
             eprintln!("query error: {}", e);
             e.to_string()
