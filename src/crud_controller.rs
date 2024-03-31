@@ -1,45 +1,26 @@
-use tokio_postgres::NoTls;
+use axum::extract::Path;
+use axum::Json;
 
-#[get("/")]
-pub async fn get() -> String {
-    // Set up the connection URL
-    let conn_string = "host=localhost user=postgres password=password dbname=postgres";
+use crate::model::NewUser;
+use crate::repository::{add_user, get_all_users, get_one_user};
 
-    // Connect to the database
-    let (client, connection) = tokio_postgres::connect(conn_string, NoTls).await.unwrap();
-
-    // Spawn a task to handle the connection
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            eprintln!("Connection error: {}", e);
-        }
-    });
-
-    // Assuming you have a single row in your_table
-    match client.query("SELECT * FROM users", &[]).await {
-        Ok(rows) => rows
-            .iter()
-            .map(|row| -> String { row.get("name") })
-            .collect::<Vec<_>>()
-            .join(";\n"),
-        Err(e) => {
-            eprintln!("query error: {}", e);
-            e.to_string()
-        }
-    }
+pub async fn hello_world() -> &'static str {
+    "Hello World!"
 }
 
-#[post("/")]
-pub fn post() -> &'static str {
-    "POST"
+pub async fn all_users() -> String {
+    get_all_users()
+        .await
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
-#[put("/")]
-pub fn put() -> &'static str {
-    "PUT"
+pub async fn one_user(Path(user_id): Path<i64>) -> String {
+    get_one_user(user_id).await.to_string()
 }
 
-#[delete("/")]
-pub fn delete() -> &'static str {
-    "DELETE"
+pub async fn new_user(Json(payload): Json<NewUser>) {
+    add_user(payload).await;
 }
